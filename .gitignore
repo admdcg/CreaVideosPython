@@ -1,0 +1,20 @@
+# Ignorar archivos multimedia locales
+*.jpg
+*.JPG
+*.jpeg
+*.PNG
+*.png
+*.gif
+*.bmp
+*.mp3
+*.mp4
+
+# Ignorar carpetas temporales y de subida
+.thumbnails/
+uploads/
+__pycache__/
+.cache/
+*.pyc
+.git/
+.idea/
+.vscode/

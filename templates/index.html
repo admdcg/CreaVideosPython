@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FotoStream Studio - Creador de Video Slideshow Premium</title>
+    <meta name="description" content="Crea videos espectaculares a partir de tus fotos con transiciones y música de fondo de manera rápida y profesional.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Local Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glass-bg-elements">
+        <div class="bg-circle circle-1"></div>
+        <div class="bg-circle circle-2"></div>
+        <div class="bg-circle circle-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>FotoStream <span>Studio</span></h1>
+                    <p>Creador de Video MP4</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <span class="badge badge-primary"><i class="fa-solid fa-images"></i> <span id="photo-count-badge">0</span> Fotos</span>
+                <span class="badge badge-success"><i class="fa-solid fa-music"></i> Audio Listo</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- Left Sidebar - Settings & Actions -->
+            <section class="sidebar-section">
+                <!-- Settings Card -->
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-sliders header-icon"></i>
+                        <h2>Ajustes de Video</h2>
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Duración por Foto</span>
+                            <span class="value-display" id="duration-val">1.5s</span>
+                        </div>
+                        <input type="range" id="duration-slider" min="1.0" max="2.5" step="0.1" value="1.5" class="custom-slider">
+                        <span class="slider-hint">Tiempo que se muestra cada foto (1.0s - 2.5s)</span>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Duración de Transición</span>
+                            <span class="value-display" id="transition-val">0.4s</span>
+                        </div>
+                        <input type="range" id="transition-slider" min="0.0" max="0.8" step="0.1" value="0.4" class="custom-slider">
+                        <span class="slider-hint">Tiempo del efecto de desvanecimiento</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="fit-mode-select">Ajuste de Aspecto</label>
+                        <select id="fit-mode-select" class="custom-select">
+                            <option value="blurred_background" selected>Fondo Borroso (Cinemático)</option>
+                            <option value="black_bars">Barras Negras (Original)</option>
+                            <option value="cropped">Recortar para Llenar Pantalla</option>
+                        </select>
+                        <span class="select-hint">Cómo se adaptan las fotos verticales o panorámicas</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="resolution-select">Resolución de Salida</label>
+                        <select id="resolution-select" class="custom-select">
+                            <option value="1920x1080" selected>Full HD 1080p (16:9)</option>
+                            <option value="1280x720">HD 720p (16:9)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Audio Settings Card -->
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-music header-icon"></i>
+                        <h2>Música de Fondo</h2>
+                    </div>
+
+                    <div class="radio-group">
+                        <label class="radio-container">
+                            <input type="radio" name="audio-option" value="default" checked>
+                            <span class="radio-checkmark"></span>
+                            <span class="radio-label">
+                                <strong>Música Instrumental</strong>
+                                <span class="radio-desc">Pista acústica relajante por defecto</span>
+                            </span>
+                        </label>
+
+                        <label class="radio-container">
+                            <input type="radio" name="audio-option" value="uploaded">
+                            <span class="radio-checkmark"></span>
+                            <span class="radio-label">
+                                <strong>Subir mi propio audio</strong>
+                                <span class="radio-desc">Archivos MP3, WAV o M4A</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Upload Input Area -->
+                    <div class="upload-area hidden" id="upload-area-container">
+                        <label for="audio-file-input" class="upload-dropzone">
+                            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                            <span>Selecciona un archivo de audio</span>
+                            <span class="upload-filename" id="selected-audio-name">Ningún archivo seleccionado</span>
+                        </label>
+                        <input type="file" id="audio-file-input" accept="audio/*" class="hidden-file-input">
+                    </div>
+                </div>
+
+                <!-- Action Button Card -->
+                <div class="card glass-card action-card">
+                    <button id="btn-generate" class="btn btn-primary btn-generate-video">
+                        <i class="fa-solid fa-film"></i> Generar Video Slideshow
+                    </button>
+
+                    <!-- Rendering Progress (Hidden initially) -->
+                    <div class="progress-container hidden" id="render-progress-container">
+                        <div class="progress-header">
+                            <span class="progress-status" id="progress-status-text">Procesando...</span>
+                            <span class="progress-percent" id="progress-percent-text">0%</span>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                        </div>
+                        <div class="progress-spinner-container">
+                            <i class="fa-solid fa-spinner fa-spin progress-spinner"></i>
+                            <span class="progress-message-detail" id="progress-message-detail">Preparando archivos de video...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Workspace - Photos List and Reordering -->
+            <section class="workspace-section">
+                <!-- Video Result Card (Floating on Top if generated) -->
+                <div class="card glass-card hidden result-card" id="result-video-card">
+                    <div class="card-header success-header">
+                        <i class="fa-solid fa-circle-check header-icon text-success"></i>
+                        <h2>¡Video Generado Correctamente!</h2>
+                        <button class="btn-close-result" id="btn-close-result"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="video-preview-wrapper">
+                        <video id="result-video-player" controls class="video-player">
+                            <source src="" type="video/mp4">
+                            Tu navegador no soporta la reproducción de video.
+                        </video>
+                    </div>
+                    <div class="result-actions">
+                        <a href="" id="btn-download-video" class="btn btn-success" download>
+                            <i class="fa-solid fa-download"></i> Descargar Video MP4
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Photos Card -->
+                <div class="card glass-card photos-card">
+                    <div class="card-header workspace-header">
+                        <div class="workspace-title">
+                            <i class="fa-solid fa-images header-icon"></i>
+                            <h2>Fotos Seleccionadas (<span id="photo-count">0</span>)</h2>
+                        </div>
+                        <div class="workspace-actions">
+                            <label for="photo-file-input" class="btn btn-primary btn-sm btn-select-photos-action" style="margin:0; cursor:pointer;">
+                                <i class="fa-solid fa-plus"></i> Añadir Fotos
+                            </label>
+                            <input type="file" id="photo-file-input" accept="image/*" multiple class="hidden-file-input">
+                            
+                            <button id="btn-sort-name" class="btn btn-secondary btn-sm" title="Ordenar por Nombre">
+                                <i class="fa-solid fa-sort-alpha-down"></i> Nombre
+                            </button>
+                            <button id="btn-sort-date" class="btn btn-secondary btn-sm" title="Ordenar por Fecha">
+                                <i class="fa-solid fa-calendar-days"></i> Fecha
+                            </button>
+                            <button id="btn-reverse-order" class="btn btn-secondary btn-sm" title="Invertir Orden">
+                                <i class="fa-solid fa-arrow-up-down-left-right"></i> Invertir
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dropzone when empty (useful for cloud deploys) -->
+                    <div class="photos-dropzone hidden" id="photos-empty-dropzone">
+                        <i class="fa-solid fa-images dropzone-large-icon"></i>
+                        <h3>Arrastra tus fotos aquí</h3>
+                        <p>O haz clic en "Añadir Fotos" arriba para seleccionar archivos de tu ordenador</p>
+                    </div>
+
+                    <!-- Photos Grid Container -->
+                    <div class="photos-grid" id="photos-grid-container">
+                        <div class="grid-loading">
+                            <i class="fa-solid fa-circle-notch fa-spin loading-icon"></i>
+                            <p>Cargando galería de fotos...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Domingo Cabeza Gurerra. Todos los derechos reservados. | Autor del programa: Domingo Cabeza Guerra</p>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
