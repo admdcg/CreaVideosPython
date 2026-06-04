@@ -990,7 +990,7 @@ body {
 /* Delete Photo Button */
 .btn-delete-photo {
     position: absolute;
-    top: 6px;
+    bottom: 6px;
     right: 6px;
     width: 22px;
     height: 22px;
@@ -1005,7 +1005,7 @@ body {
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    z-index: 5;
+    z-index: 10;
 }
 
 .photo-item:hover .btn-delete-photo {
