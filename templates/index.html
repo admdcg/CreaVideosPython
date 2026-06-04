@@ -198,19 +198,19 @@
                         </div>
                     </div>
 
-                    <!-- Dropzone when empty (useful for cloud deploys) -->
-                    <div class="photos-dropzone hidden" id="photos-empty-dropzone">
-                        <i class="fa-solid fa-images dropzone-large-icon"></i>
-                        <h3>Arrastra tus fotos aquí</h3>
-                        <p>O haz clic en "Añadir Fotos" arriba para seleccionar archivos de tu ordenador</p>
-                    </div>
-
                     <!-- Photos Grid Container -->
                     <div class="photos-grid" id="photos-grid-container">
                         <div class="grid-loading">
                             <i class="fa-solid fa-circle-notch fa-spin loading-icon"></i>
                             <p>Cargando galería de fotos...</p>
                         </div>
+                    </div>
+
+                    <!-- Dropzone (always visible underneath the grid) -->
+                    <div class="photos-dropzone" id="photos-empty-dropzone">
+                        <i class="fa-solid fa-images dropzone-large-icon"></i>
+                        <h3>Arrastra tus fotos aquí</h3>
+                        <p>O haz clic en "Añadir Fotos" arriba para seleccionar archivos de tu ordenador</p>
                     </div>
                 </div>
             </section>

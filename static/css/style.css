@@ -987,6 +987,28 @@ body {
     font-style: italic;
 }
 
+/* Compact Dropzone when grid has photos */
+.photos-dropzone.compact {
+    padding: 1.25rem 1rem;
+    margin-top: 1rem;
+    min-height: auto;
+}
+
+.photos-dropzone.compact .dropzone-large-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.photos-dropzone.compact h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.15rem;
+}
+
+.photos-dropzone.compact p {
+    font-size: 0.72rem;
+    margin-bottom: 0;
+}
+
 /* Delete Photo Button */
 .btn-delete-photo {
     position: absolute;

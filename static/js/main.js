@@ -222,7 +222,8 @@ function updateUIState() {
     photoCountBadge.textContent = count;
     
     if (count > 0) {
-        photosEmptyDropzone.classList.add('hidden');
+        photosEmptyDropzone.classList.remove('hidden');
+        photosEmptyDropzone.classList.add('compact');
         photosGridContainer.classList.remove('hidden');
         btnGenerate.disabled = false;
         btnSortName.disabled = false;
@@ -235,6 +236,7 @@ function updateUIState() {
         renderPhotosGrid();
     } else {
         photosEmptyDropzone.classList.remove('hidden');
+        photosEmptyDropzone.classList.remove('compact');
         photosGridContainer.classList.add('hidden');
         btnGenerate.disabled = true;
         btnSortName.disabled = true;
