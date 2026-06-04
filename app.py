@@ -75,6 +75,7 @@ def get_photos_list():
                 size = os.path.getsize(f)
                 files.append({
                     'name': f,
+                    'original_name': f,
                     'mtime': mtime,
                     'size': size
                 })
@@ -402,6 +403,7 @@ def api_upload_photos():
             mtime = get_image_capture_time(file_path)
             uploaded_files.append({
                 'name': filename,
+                'original_name': file.filename,
                 'size': size,
                 'mtime': mtime
             })

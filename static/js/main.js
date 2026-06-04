@@ -175,6 +175,7 @@ async function uploadPhotoFiles(files) {
 
         const newPhotos = result.files.map(f => ({
             name: f.name,
+            originalName: f.original_name || f.name,
             size: f.size,
             mtime: f.mtime || Date.now(),
             isUploaded: true
@@ -203,8 +204,12 @@ async function loadPhotos() {
         if (!response.ok) throw new Error('Error al conectar');
         photoList = await response.json();
         
+        photoList.forEach(p => {
+            p.originalName = p.original_name || p.name;
+        });
+        
         // Sort alphabetical
-        photoList.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+        photoList.sort((a, b) => a.originalName.localeCompare(b.originalName, undefined, {numeric: true, sensitivity: 'base'}));
         
         updateUIState();
     } catch (error) {
@@ -268,9 +273,9 @@ function renderPhotosGrid() {
         item.innerHTML = `
             <span class="photo-index">${index + 1}</span>
             <button class="btn-delete-photo" title="Eliminar foto"><i class="fa-solid fa-trash"></i></button>
-            <img src="${thumbUrl}" class="photo-thumbnail" alt="${photo.name}" loading="lazy">
+            <img src="${thumbUrl}" class="photo-thumbnail" alt="${photo.originalName}" loading="lazy">
             <div class="photo-overlay">
-                <span class="photo-filename">${photo.name}</span>
+                <span class="photo-filename">${photo.originalName}</span>
                 <span class="photo-size">${sizeFormatted}</span>
             </div>
         `;
@@ -358,7 +363,7 @@ function updatePhotoOrderFromDOM() {
 // Sorting logic
 function setupSortingActions() {
     btnSortName.addEventListener('click', () => {
-        photoList.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+        photoList.sort((a, b) => a.originalName.localeCompare(b.originalName, undefined, {numeric: true, sensitivity: 'base'}));
         renderPhotosGrid();
         showToast('Fotos ordenadas alfabéticamente', 'info');
     });
