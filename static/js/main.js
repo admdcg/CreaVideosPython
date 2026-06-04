@@ -161,7 +161,11 @@ async function uploadPhotoFiles(files) {
     showToast(`Subiendo ${validFiles.length} fotos al servidor...`, 'info');
 
     try {
-        const response = await fetch('/api/upload_photos', {
+        let url = '/api/upload_photos';
+        if (currentSessionId) {
+            url += `?session_id=${currentSessionId}`;
+        }
+        const response = await fetch(url, {
             method: 'POST',
             body: formData
         });
@@ -169,15 +173,19 @@ async function uploadPhotoFiles(files) {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Fallo en la subida');
 
-        currentSessionId = result.session_id;
-        
-        // Replace current list with uploaded photos
-        photoList = result.files.map(f => ({
+        const newPhotos = result.files.map(f => ({
             name: f.name,
             size: f.size,
             mtime: Date.now(),
             isUploaded: true
         }));
+
+        if (currentSessionId && currentSessionId === result.session_id) {
+            photoList = [...photoList, ...newPhotos];
+        } else {
+            currentSessionId = result.session_id;
+            photoList = newPhotos;
+        }
 
         updateUIState();
         showToast('Fotos subidas y listas', 'success');

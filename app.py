@@ -346,7 +346,9 @@ def api_upload_photos():
     files = request.files.getlist('photos')
     uploaded_files = []
     
-    session_id = uuid.uuid4().hex[:8]
+    session_id = request.args.get('session_id') or request.form.get('session_id')
+    if not session_id or not session_id.isalnum() or len(session_id) != 8:
+        session_id = uuid.uuid4().hex[:8]
     session_dir = os.path.join(UPLOAD_FOLDER, session_id)
     os.makedirs(session_dir, exist_ok=True)
     
