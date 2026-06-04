@@ -38,6 +38,7 @@ const photoFileInput = document.getElementById('photo-file-input');
 const btnSortName = document.getElementById('btn-sort-name');
 const btnSortDate = document.getElementById('btn-sort-date');
 const btnReverseOrder = document.getElementById('btn-reverse-order');
+const btnClearAll = document.getElementById('btn-clear-all');
 
 // Toast Helper
 function showToast(message, type = 'info') {
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnGenerate.addEventListener('click', generateVideo);
+    btnClearAll.addEventListener('click', clearAllPhotos);
 });
 
 // Slider handlers
@@ -217,6 +219,7 @@ function updateUIState() {
         btnGenerate.disabled = false;
         btnSortName.disabled = false;
         btnReverseOrder.disabled = false;
+        btnClearAll.disabled = false;
         
         // Disable date sorting if files are newly uploaded
         const hasUploaded = photoList.some(p => p.isUploaded);
@@ -230,6 +233,7 @@ function updateUIState() {
         btnSortName.disabled = true;
         btnSortDate.disabled = true;
         btnReverseOrder.disabled = true;
+        btnClearAll.disabled = true;
         photosGridContainer.innerHTML = '';
     }
 }
@@ -247,7 +251,6 @@ function renderPhotosGrid() {
         const sizeKB = (photo.size / 1024).toFixed(0);
         const sizeFormatted = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
         
-        // Build thumbnail URL incorporating session_id if uploaded
         let thumbUrl = `/api/thumbnail/${encodeURIComponent(photo.name)}`;
         if (currentSessionId) {
             thumbUrl += `?session_id=${currentSessionId}`;
@@ -255,6 +258,7 @@ function renderPhotosGrid() {
         
         item.innerHTML = `
             <span class="photo-index">${index + 1}</span>
+            <button class="btn-delete-photo" title="Eliminar foto"><i class="fa-solid fa-trash"></i></button>
             <img src="${thumbUrl}" class="photo-thumbnail" alt="${photo.name}" loading="lazy">
             <div class="photo-overlay">
                 <span class="photo-filename">${photo.name}</span>
@@ -262,9 +266,22 @@ function renderPhotosGrid() {
             </div>
         `;
         
+        item.querySelector('.btn-delete-photo').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removePhoto(photo.name);
+        });
+        
         addDragAndDropHandlers(item);
         photosGridContainer.appendChild(item);
     });
+}
+
+function removePhoto(name) {
+    const index = photoList.findIndex(p => p.name === name);
+    if (index !== -1) {
+        photoList.splice(index, 1);
+        updateUIState();
+    }
 }
 
 // Drag and drop event logic
@@ -348,6 +365,15 @@ function setupSortingActions() {
         renderPhotosGrid();
         showToast('Orden invertido', 'info');
     });
+}
+
+function clearAllPhotos() {
+    if (confirm('¿Estás seguro de que quieres eliminar todas las fotos de la lista?')) {
+        photoList = [];
+        currentSessionId = null;
+        updateUIState();
+        showToast('Se limpiaron todas las fotos', 'info');
+    }
 }
 
 // Upload custom audio track
