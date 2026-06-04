@@ -30,6 +30,40 @@ ALLOWED_AUDIO_EXTENSIONS = {'.mp3', '.wav', '.m4a', '.ogg'}
 # key: task_id, value: {status, progress, message, error, output_file}
 tasks = {}
 
+from datetime import datetime
+
+def get_image_capture_time(img_path):
+    """Retrieve original capture date from EXIF tags or fallback to filesystem mtime."""
+    try:
+        with Image.open(img_path) as img:
+            exif = img.getexif()
+            if exif:
+                # 1. Try to get DateTimeOriginal from EXIF sub-IFD (tag 36867 / 0x9003)
+                try:
+                    exif_ifd = exif.get_ifd(0x8769)
+                    val = exif_ifd.get(36867)
+                    if val:
+                        dt = datetime.strptime(str(val).strip(), "%Y:%m:%d %H:%M:%S")
+                        return dt.timestamp()
+                except Exception:
+                    pass
+                
+                # 2. Try to get DateTime from basic EXIF (tag 306 / 0x0112)
+                val = exif.get(306)
+                if val:
+                    try:
+                        dt = datetime.strptime(str(val).strip(), "%Y:%m:%d %H:%M:%S")
+                        return dt.timestamp()
+                    except ValueError:
+                        pass
+    except Exception as e:
+        print(f"Error reading EXIF date for {img_path}: {e}")
+        
+    try:
+        return os.path.getmtime(img_path)
+    except Exception:
+        return 0.0
+
 def get_photos_list():
     """Scan directory for valid image files, sorted by name."""
     files = []
@@ -37,7 +71,7 @@ def get_photos_list():
         if os.path.isfile(f):
             ext = os.path.splitext(f)[1].lower()
             if ext in ALLOWED_IMAGE_EXTENSIONS and not f.startswith('.'):
-                mtime = os.path.getmtime(f)
+                mtime = get_image_capture_time(f)
                 size = os.path.getsize(f)
                 files.append({
                     'name': f,
@@ -365,9 +399,11 @@ def api_upload_photos():
             
             # Get size
             size = os.path.getsize(file_path)
+            mtime = get_image_capture_time(file_path)
             uploaded_files.append({
                 'name': filename,
-                'size': size
+                'size': size,
+                'mtime': mtime
             })
             
     return jsonify({

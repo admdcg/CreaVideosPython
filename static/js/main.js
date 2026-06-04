@@ -176,7 +176,7 @@ async function uploadPhotoFiles(files) {
         const newPhotos = result.files.map(f => ({
             name: f.name,
             size: f.size,
-            mtime: Date.now(),
+            mtime: f.mtime || Date.now(),
             isUploaded: true
         }));
 
@@ -229,9 +229,8 @@ function updateUIState() {
         btnReverseOrder.disabled = false;
         btnClearAll.disabled = false;
         
-        // Disable date sorting if files are newly uploaded
-        const hasUploaded = photoList.some(p => p.isUploaded);
-        btnSortDate.disabled = hasUploaded;
+        // Allow date sorting always (since EXIF capture date is returned by the server)
+        btnSortDate.disabled = false;
         
         renderPhotosGrid();
     } else {
