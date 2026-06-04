@@ -936,3 +936,83 @@ body {
     color: var(--text-dark);
     font-weight: 500;
 }
+
+/* Large Dropzone when empty */
+.photos-dropzone {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    margin-top: 1.5rem;
+    transition: border-color var(--transition-speed), background var(--transition-speed);
+    cursor: pointer;
+}
+
+.photos-dropzone:hover, .photos-dropzone.drag-active {
+    border-color: var(--color-primary);
+    background: rgba(99, 102, 241, 0.03);
+}
+
+.dropzone-large-icon {
+    font-size: 3.5rem;
+    color: var(--text-dark);
+    margin-bottom: 1.25rem;
+    transition: color 0.3s;
+}
+
+.photos-dropzone:hover .dropzone-large-icon, .photos-dropzone.drag-active .dropzone-large-icon {
+    color: var(--color-primary);
+}
+
+.photos-dropzone h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.photos-dropzone p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.dropzone-subtext {
+    font-size: 0.75rem;
+    color: var(--text-dark);
+    font-style: italic;
+}
+
+/* Delete Photo Button */
+.btn-delete-photo {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    color: white;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 5;
+}
+
+.photo-item:hover .btn-delete-photo {
+    opacity: 1;
+}
+
+.btn-delete-photo:hover {
+    background: rgba(220, 38, 38, 1);
+    transform: scale(1.1);
+}

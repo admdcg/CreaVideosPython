@@ -372,6 +372,12 @@ function clearAllPhotos() {
         photoList = [];
         currentSessionId = null;
         updateUIState();
+        
+        // Hide result video card and reset player
+        resultVideoCard.classList.add('hidden');
+        resultVideoPlayer.pause();
+        resultVideoPlayer.src = '';
+        
         showToast('Se limpiaron todas las fotos', 'info');
     }
 }
