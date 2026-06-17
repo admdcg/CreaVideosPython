@@ -409,6 +409,57 @@ body {
     color: var(--text-muted);
 }
 
+/* Library music selection */
+.music-select-area {
+    margin-top: 1rem;
+    transition: opacity var(--transition-speed), transform var(--transition-speed);
+}
+
+.music-select-area.hidden {
+    display: none;
+}
+
+.music-select-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.6rem;
+}
+
+.music-select-row .custom-select {
+    flex: 1;
+}
+
+.btn-preview {
+    flex-shrink: 0;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(99, 102, 241, 0.12);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background var(--transition-speed), border-color var(--transition-speed), opacity var(--transition-speed);
+}
+
+.btn-preview:hover:not(:disabled) {
+    background-color: rgba(99, 102, 241, 0.25);
+    border-color: var(--color-primary);
+}
+
+.btn-preview.playing {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.btn-preview:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Upload Dropzone */
 .upload-area {
     margin-top: 1rem;

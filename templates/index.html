@@ -99,8 +99,8 @@
                             <input type="radio" name="audio-option" value="default" checked>
                             <span class="radio-checkmark"></span>
                             <span class="radio-label">
-                                <strong>Música Instrumental</strong>
-                                <span class="radio-desc">Pista acústica relajante por defecto</span>
+                                <strong>Música de la biblioteca</strong>
+                                <span class="radio-desc">Elige una pista o deja que se seleccione al azar</span>
                             </span>
                         </label>
 
@@ -112,6 +112,19 @@
                                 <span class="radio-desc">Archivos MP3, WAV o M4A</span>
                             </span>
                         </label>
+                    </div>
+
+                    <!-- Library Track Selection Area -->
+                    <div class="music-select-area" id="music-select-container">
+                        <div class="music-select-row">
+                            <select id="music-track-select" class="custom-select">
+                                <option value="random">🎲 Aleatoria (sorpréndeme)</option>
+                            </select>
+                            <button type="button" id="btn-preview-music" class="btn-preview" title="Escuchar pista" disabled>
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                        </div>
+                        <audio id="music-preview-player" preload="none"></audio>
                     </div>
 
                     <!-- Upload Input Area -->

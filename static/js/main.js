@@ -16,6 +16,10 @@ const audioOptions = document.getElementsByName('audio-option');
 const uploadAreaContainer = document.getElementById('upload-area-container');
 const audioFileInput = document.getElementById('audio-file-input');
 const selectedAudioName = document.getElementById('selected-audio-name');
+const musicSelectContainer = document.getElementById('music-select-container');
+const musicTrackSelect = document.getElementById('music-track-select');
+const btnPreviewMusic = document.getElementById('btn-preview-music');
+const musicPreviewPlayer = document.getElementById('music-preview-player');
 
 const btnGenerate = document.getElementById('btn-generate');
 const renderProgressContainer = document.getElementById('render-progress-container');
@@ -57,6 +61,7 @@ function showToast(message, type = 'info') {
 // Initial setup
 document.addEventListener('DOMContentLoaded', () => {
     loadPhotos();
+    loadMusicTracks();
     setupSliders();
     setupAudioOptions();
     setupDropzone();
@@ -93,17 +98,91 @@ function setupAudioOptions() {
         radio.addEventListener('change', (e) => {
             if (e.target.value === 'uploaded') {
                 uploadAreaContainer.classList.remove('hidden');
+                musicSelectContainer.classList.add('hidden');
+                stopMusicPreview();
             } else {
                 uploadAreaContainer.classList.add('hidden');
+                musicSelectContainer.classList.remove('hidden');
             }
         });
     });
-    
+
     audioFileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             uploadAudioFile(file);
         }
+    });
+
+    // Library track preview controls
+    musicTrackSelect.addEventListener('change', () => {
+        stopMusicPreview();
+        updatePreviewButtonState();
+    });
+
+    btnPreviewMusic.addEventListener('click', toggleMusicPreview);
+    musicPreviewPlayer.addEventListener('ended', stopMusicPreview);
+    updatePreviewButtonState();
+}
+
+// Fetch the built-in music library and populate the dropdown
+async function loadMusicTracks() {
+    try {
+        const response = await fetch('/api/music_tracks');
+        if (!response.ok) throw new Error('Error al cargar la biblioteca');
+        const tracks = await response.json();
+
+        tracks.forEach(track => {
+            const opt = document.createElement('option');
+            opt.value = track.id;
+            opt.textContent = track.name;
+            musicTrackSelect.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('No se pudo cargar la biblioteca de música:', error);
+    }
+}
+
+// Preview cannot play the "random" option (no concrete track yet)
+function updatePreviewButtonState() {
+    btnPreviewMusic.disabled = (musicTrackSelect.value === 'random');
+}
+
+function setPreviewPlayingState(playing) {
+    const icon = btnPreviewMusic.querySelector('i');
+    if (playing) {
+        btnPreviewMusic.classList.add('playing');
+        icon.className = 'fa-solid fa-pause';
+    } else {
+        btnPreviewMusic.classList.remove('playing');
+        icon.className = 'fa-solid fa-play';
+    }
+}
+
+function stopMusicPreview() {
+    musicPreviewPlayer.pause();
+    musicPreviewPlayer.currentTime = 0;
+    setPreviewPlayingState(false);
+}
+
+function toggleMusicPreview() {
+    const trackId = musicTrackSelect.value;
+    if (trackId === 'random') return;
+
+    if (!musicPreviewPlayer.paused) {
+        stopMusicPreview();
+        return;
+    }
+
+    // Always (re)assign the source: previews always start from 0, and a
+    // substring check on the resolved URL would mismatch ids like track1/track11.
+    musicPreviewPlayer.src = `/api/music/${encodeURIComponent(trackId)}`;
+    musicPreviewPlayer.play().then(() => {
+        setPreviewPlayingState(true);
+    }).catch(err => {
+        console.error('Error al reproducir la pista:', err);
+        showToast('No se pudo reproducir la pista', 'error');
+        setPreviewPlayingState(false);
     });
 }
 
@@ -448,8 +527,11 @@ async function generateVideo() {
         resolution: resolutionSelect.value,
         audio_option: audioOptionValue,
         audio_filename: audioOptionValue === 'uploaded' ? uploadedAudioFilename : '',
+        audio_track: audioOptionValue === 'default' ? musicTrackSelect.value : '',
         photo_order: photoList.map(p => p.name)
     };
+
+    stopMusicPreview();
     
     // Add session_id if they uploaded photos
     if (currentSessionId) {
