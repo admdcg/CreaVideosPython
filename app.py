@@ -197,17 +197,29 @@ def find_track(track_id):
     return None
 
 def download_track(track):
-    """Download a single default track if not already present locally."""
+    """Download a single default track if not already present locally.
+
+    Downloads to a temporary file first and atomically renames it into place,
+    so concurrent gunicorn workers can't corrupt a partially written file.
+    """
     dest = get_track_path(track['id'])
     if os.path.exists(dest):
         return True
     try:
         print(f"Downloading '{track['name']}' from {track['url']} to {dest}...")
-        urllib.request.urlretrieve(track['url'], dest)
+        fd, tmp_path = tempfile.mkstemp(suffix='.mp3', dir=DEFAULT_MUSIC_FOLDER)
+        os.close(fd)
+        urllib.request.urlretrieve(track['url'], tmp_path)
+        os.replace(tmp_path, dest)
         print(f"Track '{track['name']}' downloaded successfully.")
         return True
     except Exception as e:
         print(f"Error downloading track '{track['name']}': {e}")
+        try:
+            if 'tmp_path' in locals() and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
         return False
 
 def download_default_tracks():
@@ -532,9 +544,11 @@ def api_status(task_id):
 def download_video(filename):
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
-if __name__ == '__main__':
-    threading.Thread(target=download_default_tracks, daemon=True).start()
+# Pre-fetch the music library in the background at import time so it also runs
+# under gunicorn (where the __main__ block below is never executed).
+threading.Thread(target=download_default_tracks, daemon=True).start()
 
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"Starting Flask application on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
