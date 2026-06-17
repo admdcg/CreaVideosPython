@@ -1,6 +1,7 @@
 import os
 import sys
 import uuid
+import random
 import threading
 import tempfile
 import urllib.request
@@ -25,6 +26,19 @@ os.makedirs(THUMBNAIL_FOLDER, exist_ok=True)
 # Allowed extensions
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp'}
 ALLOWED_AUDIO_EXTENSIONS = {'.mp3', '.wav', '.m4a', '.ogg'}
+
+# Built-in royalty-free music library (downloaded on demand from SoundHelix)
+DEFAULT_MUSIC_FOLDER = os.path.join(os.getcwd(), 'default_music')
+os.makedirs(DEFAULT_MUSIC_FOLDER, exist_ok=True)
+
+DEFAULT_TRACKS = [
+    {'id': 'track1', 'name': 'Energía Pop',       'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'},
+    {'id': 'track3', 'name': 'Ritmo Alegre',      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'},
+    {'id': 'track8', 'name': 'Acústica Suave',    'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'},
+    {'id': 'track9', 'name': 'Melodía Épica',     'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3'},
+    {'id': 'track11', 'name': 'Ambiente Relajado', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3'},
+    {'id': 'track15', 'name': 'Aventura',         'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3'},
+]
 
 # Global state for background video rendering tasks
 # key: task_id, value: {status, progress, message, error, output_file}
@@ -171,19 +185,54 @@ def process_image(img_path, dest_path, target_width=1920, target_height=1080, mo
                 
         img_final.save(dest_path, 'JPEG', quality=90)
 
-def download_default_music(dest_path):
-    """Download standard free track from SoundHelix for test/default use."""
-    if os.path.exists(dest_path):
+def get_track_path(track_id):
+    """Local filesystem path where a default track is (or will be) stored."""
+    return os.path.join(DEFAULT_MUSIC_FOLDER, f"{track_id}.mp3")
+
+def find_track(track_id):
+    """Look up a track definition by its id."""
+    for t in DEFAULT_TRACKS:
+        if t['id'] == track_id:
+            return t
+    return None
+
+def download_track(track):
+    """Download a single default track if not already present locally."""
+    dest = get_track_path(track['id'])
+    if os.path.exists(dest):
         return True
-    url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
     try:
-        print(f"Downloading default music from {url} to {dest_path}...")
-        urllib.request.urlretrieve(url, dest_path)
-        print("Default music downloaded successfully.")
+        print(f"Downloading '{track['name']}' from {track['url']} to {dest}...")
+        urllib.request.urlretrieve(track['url'], dest)
+        print(f"Track '{track['name']}' downloaded successfully.")
         return True
     except Exception as e:
-        print(f"Error downloading default music: {e}")
+        print(f"Error downloading track '{track['name']}': {e}")
         return False
+
+def download_default_tracks():
+    """Pre-fetch the whole built-in music library (run in the background)."""
+    for t in DEFAULT_TRACKS:
+        download_track(t)
+
+def resolve_default_track(audio_track):
+    """Return the track to use for a 'default' audio option.
+
+    'random' (or anything unknown/empty) picks a random track from the library;
+    a valid track id returns that specific track. Ensures the chosen track is
+    downloaded before returning it.
+    """
+    track = None
+    if audio_track and audio_track != 'random':
+        track = find_track(audio_track)
+    if track is None and DEFAULT_TRACKS:
+        track = random.choice(DEFAULT_TRACKS)
+    if track is None:
+        return None
+    if not os.path.exists(get_track_path(track['id'])):
+        download_track(track)
+    path = get_track_path(track['id'])
+    return path if os.path.exists(path) else None
 
 class MoviePyProgressLogger(ProgressBarLogger):
     def __init__(self, callback):
@@ -214,6 +263,7 @@ def generate_video_thread(task_id, params):
         fit_mode = params.get('fit_mode', 'blurred_background')
         audio_option = params.get('audio_option', 'default')
         audio_filename = params.get('audio_filename', '')
+        audio_track = params.get('audio_track', 'random')
         photo_order = params.get('photo_order', [])
         resolution_str = params.get('resolution', '1280x720')
         
@@ -274,11 +324,7 @@ def generate_video_thread(task_id, params):
         
         audio_path = None
         if audio_option == 'default':
-            default_music_path = os.path.join(os.getcwd(), 'default_music.mp3')
-            if not os.path.exists(default_music_path):
-                download_default_music(default_music_path)
-            if os.path.exists(default_music_path):
-                audio_path = default_music_path
+            audio_path = resolve_default_track(audio_track)
         elif audio_option == 'uploaded' and audio_filename:
             audio_path = os.path.join(UPLOAD_FOLDER, audio_filename)
                 
@@ -413,6 +459,32 @@ def api_upload_photos():
         'files': uploaded_files
     })
 
+@app.route('/api/music_tracks')
+def api_music_tracks():
+    """List the built-in music library with availability info."""
+    tracks = [
+        {
+            'id': t['id'],
+            'name': t['name'],
+            'available': os.path.exists(get_track_path(t['id']))
+        }
+        for t in DEFAULT_TRACKS
+    ]
+    return jsonify(tracks)
+
+@app.route('/api/music/<track_id>')
+def api_music(track_id):
+    """Stream a default track for in-browser preview (downloads on demand)."""
+    track = find_track(track_id)
+    if not track:
+        return "Not Found", 404
+    path = get_track_path(track_id)
+    if not os.path.exists(path):
+        download_track(track)
+    if os.path.exists(path):
+        return send_file(path, mimetype='audio/mpeg')
+    return "Not Found", 404
+
 @app.route('/api/upload_audio', methods=['POST'])
 def api_upload_audio():
     if 'audio' not in request.files:
@@ -461,9 +533,8 @@ def download_video(filename):
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
 if __name__ == '__main__':
-    default_music_path = os.path.join(os.getcwd(), 'default_music.mp3')
-    threading.Thread(target=download_default_music, args=(default_music_path,), daemon=True).start()
-    
+    threading.Thread(target=download_default_tracks, daemon=True).start()
+
     port = int(os.environ.get('PORT', 5000))
     print(f"Starting Flask application on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
