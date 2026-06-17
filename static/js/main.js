@@ -174,10 +174,9 @@ function toggleMusicPreview() {
         return;
     }
 
-    const src = `/api/music/${encodeURIComponent(trackId)}`;
-    if (musicPreviewPlayer.src.indexOf(src) === -1) {
-        musicPreviewPlayer.src = src;
-    }
+    // Always (re)assign the source: previews always start from 0, and a
+    // substring check on the resolved URL would mismatch ids like track1/track11.
+    musicPreviewPlayer.src = `/api/music/${encodeURIComponent(trackId)}`;
     musicPreviewPlayer.play().then(() => {
         setPreviewPlayingState(true);
     }).catch(err => {
